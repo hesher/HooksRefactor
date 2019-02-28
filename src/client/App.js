@@ -22,17 +22,28 @@ export default class App extends React.Component {
     }
   }
 
+  componentWillUnmount() {
+    const { timer } = this.state;
+    clearTimeout(timer);
+  }
+
   reload(value) {
-    fetch(`/api/vals/${value || 'Nothing'}`).then(async data => {
-      if (data.ok) {
-        this.setState({
-          data: await data.text(),
-          error: null
-        });
-      } else {
-        this.setState({ error: data.statusText, data: null });
-      }
-    });
+    const { timer } = this.state;
+    clearTimeout(timer);
+    const newTimer = setTimeout(() => {
+      fetch(`/api/vals/${value || 'XX'}`).then(async data => {
+        if (data.ok) {
+          this.setState({
+            data: await data.text(),
+            error: null
+          });
+        } else {
+          this.setState({ error: data.statusText, data: null });
+        }
+      });
+    }, 1000);
+
+    this.setState({ timer: newTimer });
   }
 
   render() {
