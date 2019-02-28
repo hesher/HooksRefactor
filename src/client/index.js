@@ -3,6 +3,6 @@ import ReactDOM from 'react-dom';
 import App from './App';
 
 ReactDOM.render(
-  <App initialValue="My First Value" />,
+  <App initialValue="Default Value" />,
   document.getElementById('root')
 );

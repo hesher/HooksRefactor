@@ -1,66 +1,53 @@
 /* eslint-disable react/prefer-stateless-function */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-import PropTypes from 'prop-types';
+import { PropTypes } from 'prop-types';
 
-export default class App extends React.Component {
-  constructor() {
-    super();
-    this.state = {};
-  }
+function useServer(initialValue) {
+  const [data, setData] = useState();
+  const [error, setError] = useState();
+  const [id, setId] = useState();
 
-  componentDidMount() {
-    const { initialValue } = this.props;
-    this.reload(initialValue);
-  }
-
-  componentDidUpdate(_prevProps, prevState) {
-    const { id: oldId } = prevState;
-    const { id } = this.state;
-    if (oldId !== id) {
-      this.reload(id);
-    }
-  }
-
-  componentWillUnmount() {
-    const { timer } = this.state;
-    clearTimeout(timer);
-  }
-
-  reload(value) {
-    const { timer } = this.state;
-    clearTimeout(timer);
+  function reload(value) {
     const newTimer = setTimeout(() => {
-      fetch(`/api/vals/${value || 'XX'}`).then(async data => {
-        if (data.ok) {
-          this.setState({
-            data: await data.text(),
-            error: null
-          });
+      fetch(`/api/vals/${value || 'XX'}`).then(async resp => {
+        if (resp.ok) {
+          setData(await resp.text());
+          setError(null);
         } else {
-          this.setState({ error: data.statusText, data: null });
+          setData(null);
+          setError(resp.statusText);
         }
       });
     }, 1000);
 
-    this.setState({ timer: newTimer });
+    return () => {
+      clearTimeout(newTimer);
+    };
   }
 
-  render() {
-    const { data, error } = this.state;
-    return (
-      <span className="app-container">
-        <div>
-          <input
-            onChange={ev => this.setState({ id: ev.target.value })}
-            placeholder="Load from server?"
-          />
-        </div>
-        <h2>{error != null ? 'Error' : 'Contrivy'}</h2>
-        <div>{error != null ? 'Error Occured' : data}</div>
-      </span>
-    );
-  }
+  useEffect(() => {
+    return reload(id || initialValue);
+  }, [id]);
+
+  return { data, error, setId };
+}
+
+export default function App({ initialValue }) {
+  const { data, error, setId } = useServer(initialValue);
+
+  return (
+    <span className="app-container">
+      <div>
+        <input
+          onChange={ev => setId(ev.target.value)}
+          placeholder="Load from server?"
+        />
+      </div>
+      <h2>{error != null ? 'Error' : 'Contrivy'}</h2>
+      <div>{error != null ? 'Error Occured' : data}</div>
+    </span>
+  );
 }
 
 App.propTypes = {
